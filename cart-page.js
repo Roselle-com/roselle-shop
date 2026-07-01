@@ -1,4 +1,4 @@
-let cart = JSON.parse(localStorage.getItem("cart")) || [];
+ let cart = JSON.parse(localStorage.getItem("cart")) || [];
 
 
 const cartBox = document.getElementById("cart-items");
@@ -182,6 +182,164 @@ function save(){
     location.reload();
 
 }
+
+
+
+
+// ثبت سفارش
+
+const submitOrder = document.getElementById("submit-order");
+
+
+if(submitOrder){
+
+
+submitOrder.addEventListener("click", async function(){
+
+
+let name = document.getElementById("customer-name").value;
+
+let phone = document.getElementById("customer-phone").value;
+
+let address = document.getElementById("customer-address").value;
+
+
+
+if(
+name === "" ||
+phone === "" ||
+address === ""
+){
+
+alert("لطفاً اطلاعات سفارش را کامل کنید");
+
+return;
+
+}
+
+
+
+let total = Number(totalPriceBox.innerText);
+
+
+
+const { data: order, error } = await supabaseClient
+.from("orders")
+.insert([
+
+{
+
+customer_name: name,
+
+phone: phone,
+
+address: address,
+
+total_price: total,
+
+status: "pending"
+
+}
+
+])
+
+.select()
+
+.single();
+
+
+
+if(error){
+
+console.log(error);
+
+alert(JSON.stringify(error));
+
+return;
+
+}
+
+
+
+
+let items = [];
+
+
+
+for(let item of cart){
+
+
+const { data: product, error: productError } = await supabaseClient
+.from("products")
+.select("price")
+.eq("id", item.product_id)
+.single();
+
+
+
+if(productError){
+
+console.log(productError);
+
+alert(JSON.stringify(productError));
+
+return;
+
+}
+
+
+
+items.push({
+
+order_id: order.id,
+
+product_id: item.product_id,
+
+quantity: item.quantity,
+
+price: product.price
+
+});
+
+
+}
+
+
+
+
+const { error: itemError } = await supabaseClient
+.from("order_items")
+.insert(items);
+
+
+
+if(itemError){
+
+console.log(itemError);
+
+alert(JSON.stringify(itemError));
+
+return;
+
+}
+
+
+
+localStorage.removeItem("cart");
+
+
+alert("سفارش شما با موفقیت ثبت شد 🌹");
+
+
+window.location.href = "index.html";
+
+
+
+});
+
+
+}
+
 
 
 
